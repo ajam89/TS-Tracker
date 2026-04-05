@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twilight Struggle Tracker — Ultimate Final</title>
+  <style>
+    :root{
+      --bg:#eef2f6; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --line:#d8dee6;
+      --usa:#2563eb; --ussr:#dc2626; --good:#059669;
+      --asia:#e3b353; --europe:#b7a3da; --middleeast:#cfe8fb; --africa:#f5e58d; --central:#dbe8a3; --south:#bfe0a8;
+      --bg-hi:#fff4d6;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; padding:10px; }
+    .app { max-width:1600px; margin:0 auto; display:grid; gap:12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 10px 28px rgba(15,23,42,.05); padding:14px; }
+    .hero h1 { margin:0 0 6px; font-size:24px; line-height:1.1; }
+    .sub { margin:0; color:var(--muted); font-size:13px; line-height:1.5; }
+    .tiny { font-size:12px; color:var(--muted); line-height:1.45; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    button, .toggle { appearance:none; border:1px solid var(--line); background:#fff; border-radius:12px; padding:9px 12px; font-size:13px; font-weight:800; color:var(--text); cursor:pointer; }
+    button:hover { background:#f8fafc; }
+    .toggle { display:inline-flex; align-items:center; gap:8px; user-select:none; }
+    .toggle input { accent-color:var(--usa); }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:12px; }
+    .summary-box { background:#f8fafc; border:1px solid var(--line); border-radius:16px; padding:12px; min-height:96px; }
+    .summary-box h3 { margin:0 0 6px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+    .big { font-size:34px; font-weight:900; line-height:1; }
+    .usa-text { color:var(--usa); } .ussr-text { color:var(--ussr); } .swing-text { color:var(--good); }
+    .top-grid { display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:12px; align-items:start; }
+    .pill-wrap { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .pill { border:1px solid var(--line); border-radius:999px; background:#fff; padding:7px 10px; font-size:13px; font-weight:800; white-space:nowrap; }
+    .sea-card { background:linear-gradient(180deg, rgba(243,194,79,.18), rgba(255,255,255,1)); border:1px solid #e8c367; border-radius:20px; padding:14px; box-shadow:0 10px 28px rgba(15,23,42,.05); }
+    .sea-card h2 { margin:0 0 6px; font-size:22px; }
+    .sea-note { font-size:13px; line-height:1.5; color:#5d4c1d; margin-bottom:10px; }
+    .sea-grid { display:grid; grid-template-columns:1.3fr .9fr; gap:10px; }
+    .sea-countries { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .country-btn { width:100%; display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:left; background:#fff; border:1px solid var(--line); border-radius:15px; padding:10px 12px; cursor:pointer; }
+    .country-btn .name { font-size:13px; font-weight:800; }
+    .country-btn .sub { display:block; margin-top:3px; font-size:12px; color:var(--muted); font-weight:700; }
+    .bg-country { background:var(--bg-hi); border-color:#e8c978; }
+    .bg-star { color:#b7791f; font-weight:900; margin-right:4px; }
+    .state-badge { min-width:76px; text-align:center; border-radius:999px; padding:6px 8px; font-size:11px; font-weight:900; border:1px solid var(--line); background:#f1f5f9; color:#64748b; white-space:nowrap; }
+    .state-neutral { background:#f1f5f9; color:#64748b; } .state-usa { background:rgba(37,99,235,.12); color:var(--usa); border-color:rgba(37,99,235,.24); } .state-ussr { background:rgba(220,38,38,.12); color:var(--ussr); border-color:rgba(220,38,38,.24); }
+    .stat-col { display:grid; gap:8px; }
+    .mini-stat { background:#fff; border:1px solid var(--line); border-radius:15px; padding:12px; min-height:88px; }
+    .mini-stat h4 { margin:0 0 7px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+    .mini-stat .num { font-size:28px; line-height:1; font-weight:900; }
+    .board-scroll { overflow-x:auto; padding-bottom:8px; }
+    .regions-grid { min-width:1120px; display:grid; grid-template-columns:repeat(3,minmax(340px,1fr)); gap:12px; align-items:start; }
+    .region-card { background:var(--card); border:1px solid var(--line); border-radius:20px; overflow:hidden; box-shadow:0 10px 28px rgba(15,23,42,.05); }
+    .region-head { padding:14px; color:#111827; }
+    .region-head.asia { background:var(--asia); } .region-head.europe { background:var(--europe); } .region-head.middleeast { background:var(--middleeast); } .region-head.africa { background:var(--africa); } .region-head.central { background:var(--central); } .region-head.south { background:var(--south); }
+    .region-title { display:flex; justify-content:space-between; align-items:flex-end; gap:8px; margin-bottom:8px; }
+    .region-title h2 { margin:0; font-size:24px; line-height:1; }
+    .era { padding:6px 9px; border-radius:999px; background:rgba(255,255,255,.68); font-size:11px; font-weight:900; white-space:nowrap; }
+    .score-pills { display:flex; flex-wrap:wrap; gap:8px; }
+    .score-pill { border-radius:999px; background:rgba(255,255,255,.68); padding:6px 9px; font-size:12px; font-weight:900; white-space:nowrap; }
+    .region-body { padding:12px; }
+    .player-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .player-box { background:#f8fafc; border:1px solid var(--line); border-radius:15px; padding:12px; min-height:104px; }
+    .player-box h4 { margin:0 0 6px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+    .player-box .num { font-size:31px; line-height:1; font-weight:900; margin-bottom:6px; }
+    .meta { font-size:12px; color:var(--muted); line-height:1.45; }
+    .section-label { margin:10px 0 8px; font-size:12px; color:var(--muted); font-weight:900; text-transform:uppercase; letter-spacing:.03em; }
+    .countries-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:1120px; font-size:13px; }
+    thead th { background:#142033; color:#fff; padding:10px 8px; text-align:center; font-size:12px; font-weight:900; border-right:1px solid rgba(255,255,255,.14); }
+    thead th:last-child { border-right:none; }
+    tbody td { padding:10px 8px; border-top:1px solid var(--line); text-align:center; vertical-align:middle; background:#fff; }
+    tbody td:first-child { text-align:left; font-weight:800; white-space:nowrap; }
+    .status-pill { display:inline-block; min-width:80px; padding:5px 10px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid var(--line); background:#f1f5f9; color:#475569; white-space:nowrap; }
+    .rules-list { display:grid; gap:10px; margin-top:10px; }
+    .rule-item { border:1px solid var(--line); border-radius:16px; padding:12px; background:#fff; font-size:13px; line-height:1.5; }
+    .foot { text-align:center; margin:16px 0 8px; font-size:11px; font-weight:900; color:var(--muted); line-height:1.65; }
+    @media (max-width:1280px){ .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .top-grid { grid-template-columns:1fr; } .sea-grid { grid-template-columns:1fr; } }
+  
+    .country-btn.state-usa, .state-usa.country-btn { background: rgba(37,99,235,0.18) !important; }
+    .country-btn.state-ussr, .state-ussr.country-btn { background: rgba(220,38,38,0.18) !important; }
+
+
+    .country-btn.bg-country {
+      background: var(--bg-hi) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .country-btn.bg-country .name {
+      font-weight: 900;
+    }
+    .country-btn.bg-country.state-usa {
+      background:
+        linear-gradient(0deg, rgba(37,99,235,0.18), rgba(37,99,235,0.18)),
+        var(--bg-hi) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .country-btn.bg-country.state-ussr {
+      background:
+        linear-gradient(0deg, rgba(220,38,38,0.18), rgba(220,38,38,0.18)),
+        var(--bg-hi) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .country-btn.state-usa:not(.bg-country) {
+      background: rgba(37,99,235,0.18) !important;
+    }
+    .country-btn.state-ussr:not(.bg-country) {
+      background: rgba(220,38,38,0.18) !important;
+    }
+
+
+    .country-divider {
+      grid-column: 1 / -1;
+      height: 0;
+      border-top: 3px solid #111827;
+      margin: 4px 0 2px;
+    }
+    .country-divider-label {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      font-weight: 900;
+      color: #111827;
+      margin: 2px 0;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .country-btn.bg-country {
+      background: var(--bg-hi) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .country-btn.bg-country.state-usa {
+      background: rgba(37,99,235,0.22) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .country-btn.bg-country.state-ussr {
+      background: rgba(220,38,38,0.22) !important;
+      border: 2px solid #d4a72c !important;
+    }
+    .swing-positive { color: var(--usa) !important; }
+    .swing-negative { color: var(--ussr) !important; }
+    .swing-zero { color: var(--good) !important; }
+
+
+    .sum-region-usa {
+      color: var(--usa) !important;
+      font-weight: 900 !important;
+    }
+    .sum-region-ussr {
+      color: var(--ussr) !important;
+      font-weight: 900 !important;
+    }
+    .status-pill.sum-status-usa {
+      color: var(--usa) !important;
+      font-weight: 900 !important;
+      border-color: rgba(37,99,235,.24) !important;
+      background: rgba(37,99,235,.12) !important;
+    }
+    .status-pill.sum-status-ussr {
+      color: var(--ussr) !important;
+      font-weight: 900 !important;
+      border-color: rgba(220,38,38,.24) !important;
+      background: rgba(220,38,38,.12) !important;
+    }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section class="card hero">
+    <h1>Twilight Struggle Scoring Tracker</h1>
+    <p class="sub">Tap any country to cycle through <strong>Neutral</strong>, <strong>USA</strong>, and <strong>USSR</strong>. Regional scoring uses only the <strong>highest achieved level</strong>: <strong>Presence</strong>, <strong>Domination</strong>, or <strong>Control</strong>. Then it adds <strong>Battleground</strong> bonus and <strong>Adjacency</strong> bonus.</p>
+    <div class="summary-grid">
+      <div class="summary-box"><h3>USA Total</h3><div class="big usa-text" id="usaTotal">0</div><div class="tiny" id="usaTotalNote">Regional totals only</div></div>
+      <div class="summary-box"><h3>USSR Total</h3><div class="big ussr-text" id="ussrTotal">0</div><div class="tiny" id="ussrTotalNote">Regional totals only</div></div>
+      <div class="summary-box"><h3>Net VP</h3><div class="big swing-text" id="netSwing">0</div><div class="tiny">USA total minus USSR total</div></div>
+      <div class="summary-box"><h3>Controlled Countries</h3><div class="big" id="controlledCount">0</div><div class="tiny">Across all scoring regions</div></div>
+    </div>
+    <div class="toolbar">
+      <label class="toggle"><input type="checkbox" id="includeSeaTotals"> Include Southeast Asia in totals</label>
+      <button type="button" id="exportBtn">Export JSON</button>
+      <button type="button" id="importBtn">Import JSON</button>
+      <button type="button" id="resetBtn" onclick="resetAll(); return false;">Reset All</button>
+    </div>
+    <div class="tiny" style="margin-top:8px;"><strong>Canada:</strong> Canada counts inside <strong>Europe</strong> for regional scoring here, and it still grants <strong>USA adjacency</strong> points to the <strong>USSR</strong> when the USSR controls it.</div>
+  </section>
+
+<section class="card" style="position:sticky; top:0; z-index:50; backdrop-filter: blur(6px);">
+    <h2 style="margin:0 0 10px;font-size:22px;">Live Score Summary</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Region</th><th>Base</th><th>USA Status</th><th>USA Countries</th><th>USA BG</th><th>USA Adj</th><th>USA Score</th>
+            <th>USSR Status</th><th>USSR Countries</th><th>USSR BG</th><th>USSR Adj</th><th>USSR Score</th><th>VP Swing</th>
+          </tr>
+        </thead>
+        <tbody id="summaryTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="top-grid">
+    <div class="card">
+      <h2 style="margin:0 0 6px;font-size:22px;">Adjacency to USSR → scores for USA</h2>
+      <div class="pill-wrap" id="ussrAdjList"></div>
+      <div class="tiny" style="margin-top:8px;">If the USA controls one of these countries, the USA gets +1 adjacency point in that region.</div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 6px;font-size:22px;">Adjacency to USA → scores for USSR</h2>
+      <div class="pill-wrap" id="usaAdjList"></div>
+      <div class="tiny" style="margin-top:8px;">If the USSR controls one of these countries, the USSR gets +1 adjacency point in that region.</div>
+    </div>
+    <div class="sea-card">
+      <h2>Southeast Asia Scoring</h2>
+      <div class="sea-note">Special scoring card: <strong>1 VP</strong> each for <strong>Burma</strong>, <strong>Laos/Cambodia</strong>, <strong>Vietnam</strong>, <strong>Malaysia</strong>, <strong>Indonesia</strong>, and <strong>the Philippines</strong>. <strong>Thailand</strong> scores <strong>2 VP</strong>.</div>
+      <div class="sea-grid">
+        <div class="sea-countries" id="seaCountries"></div>
+        <div class="stat-col">
+          <div class="mini-stat"><h4>USA Southeast Asia</h4><div class="num usa-text" id="seaUSA">0</div><div class="tiny">Special card score</div></div>
+          <div class="mini-stat"><h4>USSR Southeast Asia</h4><div class="num ussr-text" id="seaUSSR">0</div><div class="tiny">Special card score</div></div>
+          <div class="mini-stat"><h4>Net Swing</h4><div class="num swing-text" id="seaSwing">0</div><div class="tiny">USA minus USSR</div></div>
+          <div class="mini-stat"><h4>Card Reminder</h4><div class="num" style="font-size:22px;">1/1/1/1/1/1/2</div><div class="tiny">Thailand scores 2 VP</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="board-scroll">
+    <section class="regions-grid" id="regionsBoard"></section>
+  </div>
+
+  
+
+  <section class="card">
+    <h2 style="margin:0 0 10px;font-size:22px;">Implemented Rules Logic</h2>
+    <div class="sub" style="margin-bottom:10px;">This build follows your final rules set: Iran is excluded from USSR adjacency, Japan counts as adjacent to the USA, Canada scores inside Europe while still granting USA adjacency points to the USSR, and Presence / Domination / Control do not stack; only the highest achieved level applies for each side in each region.</div>
+    <div class="rules-list">
+      <div class="rule-item"><strong>Presence:</strong> Control at least 1 country in the region.</div>
+      <div class="rule-item"><strong>Domination:</strong> More countries than the opponent + more Battlegrounds than the opponent + at least 1 non-Battleground.</div>
+      <div class="rule-item"><strong>Control:</strong> All Battlegrounds in the region + more countries than the opponent.</div>
+      <div class="rule-item"><strong>Final Score:</strong> Highest Level Only + Battleground Bonus + Adjacency Bonus.</div>
+    </div>
+  </section>
+
+  <div class="foot">Designed by: Aryo Jam<br>Thanks to: Amirreza Hsn</div>
+</div>
+
+<script>
+const STORAGE_KEY = "ts_tracker_ultimate_final_v1";
+const USSR_ADJACENT = ["Finland","Poland","Romania","Afghanistan","North Korea"];
+const USA_ADJACENT = ["Canada","Cuba","Mexico","Japan"];
+const SEA_VALUES = {"Burma":1,"Laos/Cambodia":1,"Vietnam":1,"Malaysia":1,"Indonesia":1,"Philippines":1,"Thailand":2};
+const REGIONS = [
+  {key:"asia",name:"Asia",era:"Early War",className:"asia",scores:{presence:3,domination:7,control:9},baseText:"3/7/9",countries:[
+    {name:"Japan",bg:true},{name:"South Korea",bg:true},{name:"North Korea",bg:true},{name:"India",bg:true},{name:"Pakistan",bg:true},{name:"Thailand",bg:true},
+    {name:"Afghanistan",bg:false},{name:"Burma",bg:false},{name:"Laos/Cambodia",bg:false},{name:"Vietnam",bg:false},{name:"Malaysia",bg:false},{name:"Indonesia",bg:false},{name:"Philippines",bg:false},{name:"Australia",bg:false},{name:"Taiwan",bg:false}
+  ]},
+  {key:"europe",name:"Europe",era:"Early War",className:"europe",scores:{presence:3,domination:7,control:"AUTO WIN"},baseText:"3/7/AUTO WIN",countries:[
+    {name:"France",bg:true},{name:"West Germany",bg:true},{name:"East Germany",bg:true},{name:"Poland",bg:true},{name:"Italy",bg:true},
+    {name:"Canada",bg:false},{name:"UK",bg:false},{name:"Finland",bg:false},{name:"Sweden",bg:false},{name:"Denmark",bg:false},{name:"Benelux",bg:false},{name:"Austria",bg:false},{name:"Czechoslovakia",bg:false},{name:"Hungary",bg:false},{name:"Romania",bg:false},{name:"Yugoslavia",bg:false},{name:"Bulgaria",bg:false},{name:"Greece",bg:false},{name:"Spain/Portugal",bg:false},{name:"Turkey",bg:false},{name:"Norway",bg:false}
+  ]},
+  {key:"middleeast",name:"Middle East",era:"Early War",className:"middleeast",scores:{presence:3,domination:5,control:7},baseText:"3/5/7",countries:[
+    {name:"Israel",bg:true},{name:"Egypt",bg:true},{name:"Iran",bg:true},{name:"Iraq",bg:true},{name:"Saudi Arabia",bg:true},{name:"Libya",bg:true},
+    {name:"Syria",bg:false},{name:"Jordan",bg:false},{name:"Lebanon",bg:false},{name:"Gulf States",bg:false}
+  ]},
+  {key:"africa",name:"Africa",era:"Mid War",className:"africa",scores:{presence:1,domination:4,control:6},baseText:"1/4/6",countries:[
+    {name:"Algeria",bg:true},{name:"Nigeria",bg:true},{name:"Zaire",bg:true},{name:"Angola",bg:true},{name:"South Africa",bg:true},
+    {name:"Morocco",bg:false},{name:"Tunisia",bg:false},{name:"West African States",bg:false},{name:"Saharan States",bg:false},{name:"Sudan",bg:false},{name:"Ivory Coast",bg:false},{name:"Cameroon",bg:false},{name:"Kenya",bg:false},{name:"Somalia",bg:false},{name:"Ethiopia",bg:false},{name:"SE African States",bg:false},{name:"Zimbabwe",bg:false},{name:"Botswana",bg:false}
+  ]},
+  {key:"central",name:"Central America",era:"Mid War",className:"central",scores:{presence:1,domination:3,control:5},baseText:"1/3/5",countries:[
+    {name:"Mexico",bg:true},{name:"Cuba",bg:true},{name:"Panama",bg:true},{name:"Guatemala",bg:false},{name:"El Salvador",bg:false},{name:"Honduras",bg:false},{name:"Nicaragua",bg:false},{name:"Costa Rica",bg:false},{name:"Haiti",bg:false},{name:"Dominican Republic",bg:false}
+  ]},
+  {key:"south",name:"South America",era:"Mid War",className:"south",scores:{presence:2,domination:5,control:6},baseText:"2/5/6",countries:[
+    {name:"Venezuela",bg:true},{name:"Brazil",bg:true},{name:"Argentina",bg:true},{name:"Chile",bg:true},
+    {name:"Colombia",bg:false},{name:"Ecuador",bg:false},{name:"Peru",bg:false},{name:"Bolivia",bg:false},{name:"Paraguay",bg:false},{name:"Uruguay",bg:false}
+  ]}
+];
+const state = { countries:{}, includeSeaTotals:false };
+
+function initState(){
+  REGIONS.forEach(r => r.countries.forEach(c => { if(!(c.name in state.countries)) state.countries[c.name] = "Neutral"; }));
+  Object.keys(SEA_VALUES).forEach(name => { if(!(name in state.countries)) state.countries[name] = "Neutral"; });
+}
+function loadState(){
+  initState();
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    if(saved && saved.countries){
+      Object.keys(saved.countries).forEach(k => {
+        if(k in state.countries && ["Neutral","USA","USSR"].includes(saved.countries[k])) state.countries[k] = saved.countries[k];
+      });
+    }
+    state.includeSeaTotals = !!(saved && saved.includeSeaTotals);
+  }catch(e){}
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({countries:state.countries, includeSeaTotals:state.includeSeaTotals}));
+}
+function nextController(current){ return current==="Neutral" ? "USA" : current==="USA" ? "USSR" : "Neutral"; }
+function controllerClass(controller){ return controller==="USA" ? "state-usa" : controller==="USSR" ? "state-ussr" : "state-neutral"; }
+function escapeHtml(str){ return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function renderAdjacency(){
+  document.getElementById("ussrAdjList").innerHTML = USSR_ADJACENT.map(c => `<span class="pill">${c}</span>`).join("");
+  document.getElementById("usaAdjList").innerHTML = USA_ADJACENT.map(c => `<span class="pill">${c}</span>`).join("");
+}
+function calcSeaScore(player){
+  let score = 0;
+  Object.entries(SEA_VALUES).forEach(([name, value]) => { if(state.countries[name] === player) score += value; });
+  return score;
+}
+
+function renderSea(){
+  const box = document.getElementById("seaCountries");
+  box.innerHTML = Object.entries(SEA_VALUES).map(([name, value]) => {
+    const controller = state.countries[name];
+    const isBG = name === "Thailand";
+    const ownerClass = controller==="USA" ? "state-usa" : controller==="USSR" ? "state-ussr" : "";
+    return `<button class="country-btn ${isBG ? "bg-country" : ""} ${ownerClass}" type="button" data-sea="${escapeHtml(name)}">
+      <div><div class="name">${isBG ? '<span class="bg-star">★</span>' : ''}${escapeHtml(name)}</div><span class="sub">${value} VP</span></div>
+      <span class="state-badge ${controllerClass(controller)}">${controller}</span>
+    </button>`;
+  }).join("");
+  box.querySelectorAll("[data-sea]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const name = btn.getAttribute("data-sea");
+      state.countries[name] = nextController(state.countries[name]);
+      saveState(); updateAll();
+    });
+  });
+  const usa = calcSeaScore("USA"), ussr = calcSeaScore("USSR");
+  document.getElementById("seaUSA").textContent = usa;
+  document.getElementById("seaUSSR").textContent = ussr;
+  const seaSwingVal = usa - ussr;
+  const seaSwingEl = document.getElementById("seaSwing");
+  seaSwingEl.textContent = seaSwingVal;
+  seaSwingEl.className = "num " + (seaSwingVal === 0 ? "swing-zero" : (seaSwingVal < 0 ? "swing-negative" : "swing-positive"));
+}
+
+function getRegionCounts(region, player){
+  const total = region.countries.filter(c => state.countries[c.name] === player).length;
+  const bg = region.countries.filter(c => c.bg && state.countries[c.name] === player).length;
+  const nonBg = region.countries.filter(c => !c.bg && state.countries[c.name] === player).length;
+  const adj = region.countries.filter(c => state.countries[c.name] === player && ((player==="USA" && USSR_ADJACENT.includes(c.name)) || (player==="USSR" && USA_ADJACENT.includes(c.name)))).length;
+  return { total, bg, nonBg, adj };
+}
+function getStatus(region, player){
+  const mine = getRegionCounts(region, player);
+  const opp = getRegionCounts(region, player==="USA" ? "USSR" : "USA");
+  const totalBG = region.countries.filter(c => c.bg).length;
+  if(mine.total === 0) return "None";
+  if(mine.bg === totalBG && mine.total > opp.total) return "Control";
+  if(mine.total > opp.total && mine.bg > opp.bg && mine.nonBg >= 1) return "Domination";
+  return "Presence";
+}
+function getBaseScore(region, status){
+  if(status === "Control") return region.scores.control === "AUTO WIN" ? 999 : region.scores.control;
+  if(status === "Domination") return region.scores.domination;
+  if(status === "Presence") return region.scores.presence;
+  return 0;
+}
+function scoreValue(region, player){
+  const status = getStatus(region, player);
+  const counts = getRegionCounts(region, player);
+  const base = getBaseScore(region, status);
+  return base === 999 ? 999 : base + counts.bg + counts.adj;
+}
+
+function renderRegions(){
+  const board = document.getElementById("regionsBoard");
+  board.innerHTML = REGIONS.map(region => {
+    const bgCountries = region.countries.filter(c => c.bg);
+    const otherCountries = region.countries.filter(c => !c.bg);
+    return `<section class="region-card">
+      <div class="region-head ${region.className}">
+        <div class="region-title"><h2>${region.name}</h2><span class="era">${region.era}</span></div>
+        <div class="score-pills">
+          <span class="score-pill">Presence: ${region.scores.presence}</span>
+          <span class="score-pill">Domination: ${region.scores.domination}</span>
+          <span class="score-pill">Control: ${region.scores.control}</span>
+        </div>
+      </div>
+      <div class="region-body">
+        <div class="player-grid">
+          <div class="player-box"><h4>USA</h4><div class="num usa-text" id="${region.key}-usa-score">0</div><div class="meta" id="${region.key}-usa-meta">None | BG 0 | Adj 0</div></div>
+          <div class="player-box"><h4>USSR</h4><div class="num ussr-text" id="${region.key}-ussr-score">0</div><div class="meta" id="${region.key}-ussr-meta">None | BG 0 | Adj 0</div></div>
+          <div class="player-box"><h4>VP Swing</h4><div class="num swing-zero" id="${region.key}-swing">0</div><div class="meta">USA total minus USSR total</div></div>
+        </div>
+        <div class="section-label">Battleground Countries First</div>
+        <div class="countries-grid">
+          ${bgCountries.map(c => {
+            const controller = state.countries[c.name];
+            const ownerClass = controller==="USA" ? "state-usa" : controller==="USSR" ? "state-ussr" : "";
+            return `<button class="country-btn bg-country ${ownerClass}" type="button" data-country="${escapeHtml(c.name)}">
+              <div><div class="name"><span class="bg-star">★</span>${escapeHtml(c.name)}</div><span class="sub">Battleground</span></div>
+              <span class="state-badge ${controllerClass(controller)}">${controller}</span>
+            </button>`;
+          }).join("")}
+          <div class="country-divider"></div>
+          <div class="country-divider-label">Other Countries</div>
+          ${otherCountries.map(c => {
+            const controller = state.countries[c.name];
+            const ownerClass = controller==="USA" ? "state-usa" : controller==="USSR" ? "state-ussr" : "";
+            return `<button class="country-btn ${ownerClass}" type="button" data-country="${escapeHtml(c.name)}">
+              <div><div class="name">${escapeHtml(c.name)}</div><span class="sub">Standard country</span></div>
+              <span class="state-badge ${controllerClass(controller)}">${controller}</span>
+            </button>`;
+          }).join("")}
+        </div>
+      </div>
+    </section>`;
+  }).join("");
+  board.querySelectorAll("[data-country]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const name = btn.getAttribute("data-country");
+      state.countries[name] = nextController(state.countries[name]);
+      saveState(); updateAll();
+    });
+  });
+}
+
+
+
+function renderSummaryTable(){
+  const tbody = document.getElementById("summaryTableBody");
+  tbody.innerHTML = REGIONS.map(region => {
+    const usaStatus = getStatus(region, "USA"), ussrStatus = getStatus(region, "USSR");
+    const usaCounts = getRegionCounts(region, "USA"), ussrCounts = getRegionCounts(region, "USSR");
+    const usaScore = scoreValue(region, "USA"), ussrScore = scoreValue(region, "USSR");
+    const swing = (usaScore===999 || ussrScore===999) ? (usaScore===999 && ussrScore===999 ? 0 : (usaScore===999 ? "AUTO" : "-AUTO")) : usaScore - ussrScore;
+
+    const usaStrong = ["Domination","Control"].includes(usaStatus);
+    const ussrStrong = ["Domination","Control"].includes(ussrStatus);
+    const usaHas = usaStatus !== "None";
+    const ussrHas = ussrStatus !== "None";
+
+    let regionClass = "";
+    let usaStatusClass = "";
+    let ussrStatusClass = "";
+
+    if (usaStrong && !ussrStrong) {
+      regionClass = "sum-region-usa";
+      usaStatusClass = "sum-status-usa";
+    } else if (ussrStrong && !usaStrong) {
+      regionClass = "sum-region-ussr";
+      ussrStatusClass = "sum-status-ussr";
+    } else if (!usaStrong && !ussrStrong) {
+      if (usaHas && !ussrHas) {
+        regionClass = "sum-region-usa";
+        usaStatusClass = "sum-status-usa";
+      } else if (ussrHas && !usaHas) {
+        regionClass = "sum-region-ussr";
+        ussrStatusClass = "sum-status-ussr";
+      }
+    }
+
+    return `<tr>
+      <td class="${regionClass}">${region.name}</td>
+      <td>${region.baseText}</td>
+      <td><span class="status-pill ${usaStatusClass}">${usaStatus}</span></td>
+      <td>${usaCounts.total}</td>
+      <td>${usaCounts.bg}</td>
+      <td>${usaCounts.adj}</td>
+      <td class="usa-text" style="font-weight:900;">${usaScore===999 ? "AUTO" : usaScore}</td>
+      <td><span class="status-pill ${ussrStatusClass}">${ussrStatus}</span></td>
+      <td>${ussrCounts.total}</td>
+      <td>${ussrCounts.bg}</td>
+      <td>${ussrCounts.adj}</td>
+      <td class="ussr-text" style="font-weight:900;">${ussrScore===999 ? "AUTO" : ussrScore}</td>
+      <td class="${swing === 0 ? "swing-zero" : (String(swing).startsWith("-") ? "swing-negative" : "swing-positive")}" style="font-weight:900;">${swing}</td>
+    </tr>`;
+  }).join("");
+}
+
+
+function updateScores(){
+  let usaTotal = 0, ussrTotal = 0, controlledCount = 0;
+  REGIONS.forEach(region => {
+    const usaStatus = getStatus(region, "USA"), ussrStatus = getStatus(region, "USSR");
+    const usaCounts = getRegionCounts(region, "USA"), ussrCounts = getRegionCounts(region, "USSR");
+    const usaScore = scoreValue(region, "USA"), ussrScore = scoreValue(region, "USSR");
+    controlledCount += usaCounts.total + ussrCounts.total;
+    usaTotal += usaScore; ussrTotal += ussrScore;
+    document.getElementById(`${region.key}-usa-score`).textContent = usaScore===999 ? "AUTO" : usaScore;
+    document.getElementById(`${region.key}-ussr-score`).textContent = ussrScore===999 ? "AUTO" : ussrScore;
+    document.getElementById(`${region.key}-usa-meta`).textContent = `${usaStatus} | BG ${usaCounts.bg} | Adj ${usaCounts.adj}`;
+    document.getElementById(`${region.key}-ussr-meta`).textContent = `${ussrStatus} | BG ${ussrCounts.bg} | Adj ${ussrCounts.adj}`;
+    const swing = (usaScore===999 || ussrScore===999) ? (usaScore===999 && ussrScore===999 ? 0 : (usaScore===999 ? "AUTO" : "-AUTO")) : usaScore - ussrScore;
+    const swingEl = document.getElementById(`${region.key}-swing`);
+    swingEl.textContent = swing;
+    swingEl.className = "num " + (swing === 0 ? "swing-zero" : (String(swing).startsWith("-") ? "swing-negative" : "swing-positive"));
+  });
+  const seaUSA = calcSeaScore("USA"), seaUSSR = calcSeaScore("USSR");
+  if(state.includeSeaTotals){
+    usaTotal = usaTotal>=999 ? 999 : usaTotal + seaUSA;
+    ussrTotal = ussrTotal>=999 ? 999 : ussrTotal + seaUSSR;
+  }
+  document.getElementById("usaTotal").textContent = usaTotal>=999 ? "AUTO" : usaTotal;
+  document.getElementById("ussrTotal").textContent = ussrTotal>=999 ? "AUTO" : ussrTotal;
+  document.getElementById("controlledCount").textContent = controlledCount;
+  const net = (usaTotal===999 || ussrTotal===999) ? (usaTotal===999 && ussrTotal===999 ? 0 : (usaTotal===999 ? "AUTO" : "-AUTO")) : usaTotal - ussrTotal;
+  const netEl = document.getElementById("netSwing");
+  netEl.textContent = net;
+  netEl.className = "big " + (net === 0 ? "swing-zero" : (String(net).startsWith("-") ? "swing-negative" : "swing-positive"));
+  document.getElementById("usaTotalNote").textContent = state.includeSeaTotals ? "Includes Southeast Asia" : "Regional totals only";
+  document.getElementById("ussrTotalNote").textContent = state.includeSeaTotals ? "Includes Southeast Asia" : "Regional totals only";
+}
+function updateAll(){ renderSea(); renderRegions(); updateScores(); renderSummaryTable(); document.getElementById("includeSeaTotals").checked = state.includeSeaTotals; }
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({countries:state.countries, includeSeaTotals:state.includeSeaTotals}, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = "twilight_struggle_tracker_state.json"; a.click(); URL.revokeObjectURL(url);
+}
+function importJSON(){
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = ".json,application/json";
+  input.onchange = () => {
+    const file = input.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try{
+        const data = JSON.parse(e.target.result);
+        if(data.countries){
+          Object.keys(state.countries).forEach(k => {
+            if(["Neutral","USA","USSR"].includes(data.countries[k])) state.countries[k] = data.countries[k];
+          });
+        }
+        state.includeSeaTotals = !!data.includeSeaTotals;
+        saveState(); updateAll();
+      }catch(err){ alert("Invalid JSON file."); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+function resetAll(){
+  Object.keys(state.countries).forEach(k => { state.countries[k] = "Neutral"; });
+  state.includeSeaTotals = false;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  saveState();
+  renderAdjacency();
+  updateAll();
+}
+document.getElementById("includeSeaTotals").addEventListener("change", e => { state.includeSeaTotals = e.target.checked; saveState(); updateAll(); });
+document.getElementById("exportBtn").addEventListener("click", exportJSON);
+document.getElementById("importBtn").addEventListener("click", importJSON);
+document.getElementById("resetBtn").addEventListener("click", resetAll);
+document.getElementById("resetBtn").addEventListener("touchend", function(e){ e.preventDefault(); resetAll(); }, {passive:false});
+loadState(); renderAdjacency(); updateAll();
+</script>
+</body>
+</html>
