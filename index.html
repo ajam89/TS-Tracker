@@ -4,13 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="/icon-512.png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="TS Tracker">
-<meta name="theme-color" content="#0f172a">
-  <title>TS Tracker</title>
+  <title>Twilight Struggle Tracker — Ultimate Final</title>
   <style>
     :root{
       --bg:#eef2f6; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --line:#d8dee6;
@@ -244,7 +238,7 @@
     <div class="sub" style="margin-bottom:10px;">This build follows your final rules set: Iran is excluded from USSR adjacency, Japan counts as adjacent to the USA, Canada scores inside Europe while still granting USA adjacency points to the USSR, and Presence / Domination / Control do not stack; only the highest achieved level applies for each side in each region.</div>
     <div class="rules-list">
       <div class="rule-item"><strong>Presence:</strong> Control at least 1 country in the region.</div>
-      <div class="rule-item"><strong>Domination:</strong> More countries than the opponent + more Battlegrounds than the opponent + at least 1 non-Battleground.</div>
+      <div class="rule-item"><strong>Domination:</strong> More Battlegrounds than the opponent + more non-Battlegrounds than the opponent.</div>
       <div class="rule-item"><strong>Control:</strong> All Battlegrounds in the region + more countries than the opponent.</div>
       <div class="rule-item"><strong>Final Score:</strong> Highest Level Only + Battleground Bonus + Adjacency Bonus.</div>
     </div>
@@ -360,7 +354,7 @@ function getStatus(region, player){
   const totalBG = region.countries.filter(c => c.bg).length;
   if(mine.total === 0) return "None";
   if(mine.bg === totalBG && mine.total > opp.total) return "Control";
-  if(mine.total > opp.total && mine.bg > opp.bg && mine.nonBg >= 1) return "Domination";
+  if(mine.bg > opp.bg && mine.nonBg > opp.nonBg) return "Domination";
   return "Presence";
 }
 function getBaseScore(region, status){
